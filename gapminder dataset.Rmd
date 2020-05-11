@@ -1,0 +1,80 @@
+---
+title: "Lecture-4"
+author: "Sajud"
+date: "2/18/2020"
+output: html_document
+---
+```{r}
+require(gapminder)
+require(ggplot2)
+require(tidyverse)
+ggplot(aes(gapminder,x=lifeExp, y =gdpPercap))+geom_point()
+```
+
+
+```{r}
+## Both are the same
+gapminder%>%ggplot(aes(x=lifeExp, y =gdpPercap))+geom_point()
+```
+
+```{r}
+gapminder%>%ggplot(aes(x=pop, y =lifeExp))+geom_point()
+```
+```{r}
+gapminder%>%filter(continent=="Africa") %>% ggplot(aes(x=pop, y =lifeExp))+geom_point()
+```
+
+```{r}
+gapminder%>%ggplot(aes(x=pop, y =lifeExp, color=continent))+geom_point() + theme_minimal()
+```
+
+```{r}
+gapminder%>%ggplot(aes(x=pop, y =lifeExp, color=as.factor(year)))+geom_point()+ theme_dark()
+```
+
+```{r}
+gapminder%>%ggplot(aes(x=pop, y =lifeExp, alpha=gdpPercap))+geom_point()+ theme_classic()
+```
+```{r}
+gapminder%>%ggplot(aes(x=pop, y =lifeExp, color=country))+geom_point()+ theme_classic()
+```
+
+```{r}
+ggplot(gapminder, aes(x=lifeExp, y=gdpPercap, color=continent))+ geom_point()
+```
+
+```{r}
+ggplot(gapminder, aes(x=lifeExp, y=gdpPercap))+ geom_point(color='red')
+```
+
+
+##Linear Regression
+
+```{r}
+usa_data=gapminder %>% filter(country=='United States')
+
+usa_data %>% ggplot(aes(x=gdpPercap, y=lifeExp))+geom_point() + geom_smooth(aes(x=gdpPercap, y=lifeExp), method = 'lm', se=0)
+```
+```{r}
+lm(lifeExp ~ gdpPercap, data=usa_data)
+```
+LifeExp=6.46+3.36*10^-4gdpPercap
+
+
+##Making the model
+```{r}
+usa_data=usa_data %>% mutate(gdpPercap=gdpPercap/1000, pop=pop/100000)
+model3=lm(lifeExp ~ gdpPercap+pop, data=usa_data)
+summary(model3)
+```
+
+## prediction
+```{r}
+usa_data_with_prediction=usa_data %>% mutate(predictions=-89.918*gdpPercap+909.844*pop+55.076)
+```
+#plot the model
+
+```{r}
+usa_data_with_prediction %>% ggplot(aes(x=lifeExp, y=gdpPercap))+geom_point()+geom_albine()
+```
+
