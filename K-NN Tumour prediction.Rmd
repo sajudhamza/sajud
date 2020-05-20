@@ -1,0 +1,88 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+require(tidyverse)
+wbc_data=read_csv('D:\\Masters\\Data analysis 2\\Lecture Notes\\Data\\wbc.csv')
+```
+
+
+## Preprocessing 
+
+### 1- Normalization-Type 1
+```{r}
+wbc_data
+
+normalize<-function(x){(x-min(x))/(max(x)-min(x))}
+
+wbc_data%>%mutate(n_radius_mean=normalize(radius_mean))%>%select(contains('radius_mean'))
+```
+
+
+#### Z-score
+
+```{r}
+wbc_data%>%mutate(z_radius_mean=scale(radius_mean))%>%select(contains('radius_mean'))
+```
+
+
+#### Transform all numeric variables(Standardization)
+
+```{r}
+wbc_data=wbc_data%>%column_to_rownames('id')
+wbc_data%>%mutate_if(is.numeric, scale)
+```
+
+
+### Model evaluation 
+
+```{r}
+require(caret)
+
+wbc_n=wbc_data%>%mutate_if(is.numeric, normalize)
+set.seed(123)
+train=runif(nrow(wbc_n))>.2
+wbc_n_train=wbc_n[train,]
+wbc_n_test=wbc_n[!train,]
+
+require(class)
+
+##prediction with K-NN
+predict_wbc= knn(train=wbc_n_train[,-1], test=wbc_n_test[,-1], cl=wbc_n_train$diagnosis, k=21, prob=TRUE)
+predict_wbc
+
+##evaluation
+confusionMatrix(predict_wbc, reference = as.factor(wbc_n_test$diagnosis), positive = 'M')
+
+```
+
+
+## Selecting k 
+```{r}
+
+seq(1,22,2)
+
+rs=list()
+for (i in seq(1,22,2)){
+  predict_wbc= knn(train=wbc_n_train[,-1], test=wbc_n_test[,-1], cl=wbc_n_train$diagnosis, k=i, prob=TRUE)
+  results=confusionMatrix(predict_wbc, reference = as.factor(wbc_n_test$diagnosis), positive = 'M')
+  results=results$overall
+  rs[[as.character(i)]]=results
+}
+
+
+final_results=rs%>%as_tibble()%>%t()
+final_results=final_results[,1:2]
+results_df=data.frame(final_results)
+names(results_df)<-c('Accuracy','Kappa')
+row.names(results_df)
+results_df$k=as.numeric(row.names(results_df))
+results_df%>%arrange(desc(Accuracy))
+```
+
+```{r}
+ggplot(results_df)+geom_line(aes(x=k, y=Accuracy))
+```
+
